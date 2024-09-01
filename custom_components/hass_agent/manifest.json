@@ -1,10 +1,10 @@
 {
   "domain": "hass_agent",
-  "name": "HASS.Agent",
-  "version": "2022.11.9",
+  "name": "HASS.Agent-Integration",
+  "version": "2024.09.01",
   "config_flow": true,
-  "documentation": "https://github.com/LAB02-Research/HASS.Agent-Integration",
-  "issue_tracker": "https://github.com/LAB02-Research/HASS.Agent-Integration/issues",
+  "documentation": "https://github.com/clipman/HASS.Agent-Integration",
+  "issue_tracker": "https://github.com/clipman/HASS.Agent-Integration/issues",
   "mqtt": ["hass.agent/devices/#"],
   "ssdp": [],
   "zeroconf": [],
@@ -15,7 +15,8 @@
   ],
   "codeowners": [
     "@fillefilip8",
-    "@LAB02-Admin"
+    "@LAB02-Admin",
+    "@clipman"
   ],
   "iot_class": "local_push"
 }
