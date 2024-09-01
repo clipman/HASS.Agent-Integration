@@ -1,5 +1,5 @@
 [![Validate](https://github.com/LAB02-Research/HASS.Agent-Integration/workflows/Validate/badge.svg)](https://github.com/LAB02-Research/HASS.Agent-Integration/actions?query=workflow:"Validate")
-[![GitHub release](https://img.shields.io/github/release/LAB02-Research/HASS.Agent-Integration?include_prereleases=&sort=semver&color=blue)](https://github.com/LAB02-Research/HASS.Agent-Integration/releases/)
+[![GitHub release](https://img.shields.io/github/release/clipman/HASS.Agent-Integration?include_prereleases=&sort=semver&color=blue)](https://github.com/clipman/HASS.Agent-Integration/releases/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](#license)
 [![buymeacoffee](https://img.shields.io/badge/BuyMeACoffee-Donate-blue.svg)](https://www.buymeacoffee.com/lab02research)
 [![Discord](https://img.shields.io/badge/dynamic/json?color=blue&label=Discord&logo=discord&logoColor=white&query=presence_count&suffix=%20Online&url=https://discordapp.com/api/guilds/932957721622360074/widget.json)](https://discord.gg/nMvqzwrVBU)
