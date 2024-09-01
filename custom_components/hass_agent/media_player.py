@@ -37,6 +37,7 @@ from homeassistant.const import (
     STATE_OFF,
     STATE_PAUSED,
     STATE_PLAYING,
+    STATE_STANDBY,
 )
 
 from homeassistant.core import HomeAssistant, callback
@@ -189,6 +190,8 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
             return STATE_PLAYING
         if self._state == "paused":
             return STATE_PAUSED
+        if self._state == "standby":
+            return STATE_STANDBY
 
         return STATE_IDLE
 
@@ -263,8 +266,8 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
 
     async def async_media_stop(self):
         """Send stop command"""
-        self._state = STATE_PAUSED
-        await self._send_command("stop")
+        self._state = STATE_STANDBY
+        await self._send_command("pause")
 
     async def async_media_next_track(self):
         """Send next track command"""
