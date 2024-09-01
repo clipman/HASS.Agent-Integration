@@ -1,5 +1,5 @@
 {
   "name": "HASS.Agent",
-  "homeassistant": "2022.9",
+  "homeassistant": "2024.09.01",
   "render_readme": true
 }
