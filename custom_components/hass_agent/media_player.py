@@ -23,9 +23,8 @@ from homeassistant.components.media_player import (
     MediaPlayerDeviceClass,
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
+    MediaType,
 )
-
-from homeassistant.components.media_player import MediaType
 
 from homeassistant.components.media_player.browse_media import (
     BrowseMedia,
