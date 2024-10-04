@@ -1,7 +1,7 @@
 {
   "domain": "hass_agent",
   "name": "HASS.Agent-Integration",
-  "version": "2024.09.01",
+  "version": "2024.10.01",
   "config_flow": true,
   "documentation": "https://github.com/clipman/HASS.Agent-Integration",
   "issue_tracker": "https://github.com/clipman/HASS.Agent-Integration/issues",
