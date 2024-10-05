@@ -82,7 +82,7 @@ class HassAgentNotificationService(BaseNotificationService):
                         new_url = f"{external_url}{image}?token={access_token}"
 
             elif media_source.is_media_source_id(image):
-                sourced_media = await media_source.async_resolve_media(self.hass, image)
+                sourced_media = await media_source.async_resolve_media(self.hass, image, self.entity_id)
                 sourced_media = media_source.async_process_play_media_url(
                     self.hass, sourced_media.url
                 )
