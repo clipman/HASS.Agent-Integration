@@ -32,15 +32,6 @@ from homeassistant.components.media_player.browse_media import (
     async_process_play_media_url,
 )
 
-# MediaPlayerState.
-# OFF = "off"
-# ON = "on"
-# IDLE = "idle"
-# PLAYING = "playing"
-# PAUSED = "paused"
-# STANDBY = "standby"
-# BUFFERING = "buffering"
-
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components import media_source, mqtt
