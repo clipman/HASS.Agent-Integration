@@ -23,6 +23,7 @@ from homeassistant.components.media_player import (
     MediaPlayerDeviceClass,
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
+    MediaPlayerState,
     MediaType,
 )
 
@@ -31,13 +32,14 @@ from homeassistant.components.media_player.browse_media import (
     async_process_play_media_url,
 )
 
-from homeassistant.const import (
-    STATE_IDLE,
-    STATE_OFF,
-    STATE_PAUSED,
-    STATE_PLAYING,
-    STATE_STANDBY,
-)
+# MediaPlayerState.
+# OFF = "off"
+# ON = "on"
+# IDLE = "idle"
+# PLAYING = "playing"
+# PAUSED = "paused"
+# STANDBY = "standby"
+# BUFFERING = "buffering"
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -95,6 +97,19 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
     def updated(self, message: ReceiveMessage):
         """Updates the media player with new data from MQTT"""
         payload = json.loads(message.payload)
+
+        _logger.warning(
+            "Media Player Update - State: %s, Volume: %s, Muted: %s, Album Artist: %s, Album Title: %s, Artist: %s, Title: %s, Duration: %s, Position: %s",
+            payload["state"].lower(),
+            payload["volume"],
+            payload["muted"],
+            payload.get("albumartist", "N/A"),
+            payload.get("albumtitle", "N/A"),
+            payload.get("artist", "N/A"),
+            payload.get("title", "N/A"),
+            payload.get("duration", "N/A"),
+            payload.get("currentposition", "N/A")
+        )
 
         self._state = payload["state"].lower()
         self._volume_level = payload["volume"]
@@ -182,17 +197,19 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
     def state(self):
         """Return the state of the device"""
         if self._state is None:
-            return STATE_OFF
+            return MediaPlayerState.OFF
         if self._state == "idle":
-            return STATE_IDLE
+            return MediaPlayerState.IDLE
         if self._state == "playing":
-            return STATE_PLAYING
+            return MediaPlayerState.PLAYING
         if self._state == "paused":
-            return STATE_PAUSED
+            return MediaPlayerState.PAUSED
         if self._state == "standby":
-            return STATE_STANDBY
+            return MediaPlayerState.STANDBY
+        if self._state == "buffering":
+            return MediaPlayerState.BUFFERING
 
-        return STATE_IDLE
+        return MediaPlayerState.IDLE
 
     @property
     def available(self):
@@ -201,10 +218,10 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
         diff = round(time.time() - self._last_updated)
         return diff < 5
 
-    # @property
-    # def media_title(self):
-    #     """Return the title of current playing media"""
-    #     return self._playing
+    @property
+    def media_title(self):
+        """Return the title of current playing media"""
+        return self._playing
 
     @property
     def volume_level(self):
@@ -255,18 +272,18 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
 
     async def async_media_play(self):
         """Send play command"""
-        self._state = STATE_PLAYING
+        self._state = MediaPlayerState.PLAYING
         await self._send_command("play")
 
     async def async_media_pause(self):
         """Send pause command"""
-        self._state = STATE_PAUSED
+        self._state = MediaPlayerState.PAUSED
         await self._send_command("pause")
 
     async def async_media_stop(self):
         """Send stop command"""
-        self._state = STATE_STANDBY
-        await self._send_command("pause")
+        self._state = MediaPlayerState.PAUSED
+        await self._send_command("stop")
 
     async def async_media_next_track(self):
         """Send next track command"""
@@ -308,5 +325,5 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
 
         _logger.debug("Received media request from HA: %s", media_id)
 
-        self._state = STATE_PLAYING
+        self._state = MediaPlayerState.PLAYING
         await self._send_command("playmedia", media_id)
