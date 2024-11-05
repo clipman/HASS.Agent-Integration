@@ -89,19 +89,6 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
         """Updates the media player with new data from MQTT"""
         payload = json.loads(message.payload)
 
-        _logger.warning(
-            "Media Player Update - State: %s, Volume: %s, Muted: %s, Album Artist: %s, Album Title: %s, Artist: %s, Title: %s, Duration: %s, Position: %s",
-            payload["state"].lower(),
-            payload["volume"],
-            payload["muted"],
-            payload.get("albumartist", "N/A"),
-            payload.get("albumtitle", "N/A"),
-            payload.get("artist", "N/A"),
-            payload.get("title", "N/A"),
-            payload.get("duration", "N/A"),
-            payload.get("currentposition", "N/A")
-        )
-
         self._state = payload["state"].lower()
         self._volume_level = payload["volume"]
         self._muted = payload["muted"]
