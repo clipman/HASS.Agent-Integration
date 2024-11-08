@@ -11,7 +11,6 @@ from homeassistant.helpers import device_registry as dr
 
 from .const import DOMAIN
 
-
 from homeassistant.components.mqtt.subscription import (
     async_prepare_subscribe_topics,
     async_subscribe_topics,
@@ -20,6 +19,7 @@ from homeassistant.components.mqtt.subscription import (
 from homeassistant.config_entries import ConfigEntry
 
 from homeassistant.components.media_player import (
+    ATTR_MEDIA_EXTRA,
     MediaPlayerDeviceClass,
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
@@ -50,6 +50,7 @@ SUPPORT_HAMP = (
     | MediaPlayerEntityFeature.SEEK
     | MediaPlayerEntityFeature.BROWSE_MEDIA
     | MediaPlayerEntityFeature.VOLUME_SET
+    | MediaPlayerEntityFeature.TURN_OFF
 )
 
 
@@ -95,20 +96,17 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
         self._available = True
 
         if self._state != "off":
-            self._attr_media_album_artist = payload["albumartist"]
-            self._attr_media_album_name = payload["albumtitle"]
-            self._attr_media_artist = payload["artist"]
-            self._attr_media_title = payload["title"]
+            if payload["title"]:
+                self._attr_media_title = payload["title"]
+                self._attr_media_artist = payload["artist"]
+                self._attr_media_album_name = payload["albumtitle"]
+                self._attr_media_album_artist = payload["albumartist"]
 
             self._attr_media_duration = payload["duration"]
             self._attr_media_position = payload["currentposition"]
-
             self._attr_media_position_updated_at = util.dt.utcnow()
 
         self._last_updated = time.time()
-
-        # self.media_image_url
-
         self.async_write_ha_state()
 
     async def async_added_to_hass(self) -> None:
@@ -152,18 +150,16 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
         self._available = False
         self._muted = False
         self._volume_level = 0
-        self._playing = ""
         self._state = ""
-
+        self._media_id = ""
         self._listeners = {}
         self._last_updated = 0
 
-    async def _send_command(self, command, data=None):
+    async def _send_command(self, command, data=None, info=None):
         """Send a command"""
         _logger.debug("Sending command: %s", command)
 
-        payload = {"command": command, "data": data}
-
+        payload = {"command": command, "data": data, "info": info}
         await mqtt.async_publish(self.hass, self._command_topic, json.dumps(payload))
 
     @property
@@ -197,12 +193,7 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
         return diff < 5
 
     @property
-    def media_title(self):
-        """Return the title of current playing media"""
-        return self._playing
-
-    @property
-    def volume_level(self):
+    def volume_level(self) -> float | None:
         """Return the volume level of the media player (0..1)"""
         return self._volume_level / 100.0
         
@@ -212,7 +203,7 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
         await self._send_command("setvolume", volume)
 
     @property
-    def is_volume_muted(self):
+    def is_volume_muted(self) -> bool | None:
         """Return if volume is currently muted"""
         return self._muted
 
@@ -227,9 +218,19 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
         return MediaPlayerDeviceClass.SPEAKER
 
     @property
-    def media_content_type(self):
+    def media_content_id(self) -> str | None:
+        """Content ID of current playing media."""
+        return self._media_id
+
+    @property
+    def media_content_type(self) -> MediaType | None:
         """Content type of current playing media"""
         return MediaType.MUSIC
+
+    async def async_turn_off(self) -> None:
+        """Turn off."""
+        self._state = MediaPlayerState.IDLE
+        await self._send_command("pause")
 
     async def async_media_seek(self, position: float) -> None:
         self._attr_media_position = position
@@ -260,8 +261,8 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
 
     async def async_media_stop(self):
         """Send stop command"""
-        self._state = MediaPlayerState.PAUSED
-        await self._send_command("stop")
+        self._state = MediaPlayerState.IDLE
+        await self._send_command("pause")
 
     async def async_media_next_track(self):
         """Send next track command"""
@@ -284,7 +285,9 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
             content_filter=lambda item: item.media_content_type.startswith("audio/"),
         )
 
-    async def async_play_media(self, media_type: str, media_id: str, **kwargs: Any):
+    async def async_play_media(
+        self, media_type: MediaType | str, media_id: str, **kwargs: Any
+    ) -> None:
         """Play media source"""
         if not media_type.startswith("music") and not media_type.startswith("audio/") and not media_type.startswith("provider"):
             _logger.error(
@@ -294,14 +297,35 @@ class HassAgentMediaPlayerDevice(MediaPlayerEntity):
             )
             return
 
+        _logger.debug("Playing media: %s, %s, %s", media_type, media_id, kwargs)
+
         if media_source.is_media_source_id(media_id):
-            play_item = await media_source.async_resolve_media(self.hass, media_id, self.entity_id)
+            sourced_media = await media_source.async_resolve_media(
+                self.hass, media_id, self.entity_id
+            )
+            media_id = sourced_media.url
 
-            # play_item returns a relative URL if it has to be resolved on the Home Assistant host
-            # This call will turn it into a full URL
-            media_id = async_process_play_media_url(self.hass, play_item.url)
+        self._media_id = async_process_play_media_url(self.hass, media_id)
+        
+        extra: dict[str, Any] = kwargs.get(ATTR_MEDIA_EXTRA) or {}
+        metadata: dict[str, Any] = extra.get("metadata") or {}
+        images: dict[str, Any] = metadata.get("images") or {}
 
-        _logger.debug("Received media request from HA: %s", media_id)
+        self._attr_media_title = metadata.get("title") or "Home Assistant"
+        self._attr_media_artist = metadata.get("artist")
+        self._attr_media_album_name = metadata.get("album_name") or metadata.get("albumtitle")
+        self._attr_media_album_artist = metadata.get("album_artist") or metadata.get("albumartist")
+        self._attr_media_image_url = (
+            images[0].get("url") if images and isinstance(images, list) and images[0].get("url") else metadata.get("imageUrl")
+        )
 
+        self._available = True
         self._state = MediaPlayerState.PLAYING
-        await self._send_command("playmedia", media_id)
+        info = {
+            "title": self._attr_media_title,
+            "artist": self._attr_media_artist,
+            "albumtitle": self._attr_media_album_name,
+            "albumartist": self._attr_media_album_artist,
+            "image_url": self._attr_media_image_url
+        }
+        await self._send_command("playmedia", self._media_id, info)
