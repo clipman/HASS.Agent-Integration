@@ -22,7 +22,12 @@ _logger = logging.getLogger(__name__)
 class OptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
+        super().__init__()
+        self._entry_id = config_entry.entry_id
+
+    @property
+    def config_entry(self) -> config_entries.ConfigEntry | None:
+        return self.hass.config_entries.async_get_entry(self._entry_id)
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
