@@ -254,3 +254,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         return False
     
     return True
+
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload config entry."""
+    _logger.debug("Reloading config entry: %s [%s]", entry.data["device"]["name"], entry.unique_id)
+    await async_unload_entry(hass, entry)
+    await async_setup_entry(hass, entry)
