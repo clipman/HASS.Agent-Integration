@@ -1,5 +1,4 @@
 {
   "name": "HASS.Agent-Integration",
-  "homeassistant": "2024.2",
   "render_readme": true
 }
