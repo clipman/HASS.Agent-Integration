@@ -83,7 +83,7 @@ async def handle_apis_changed(hass: HomeAssistant, entry: ConfigEntry, apis):
     if apis is not None:
 
         device_registry = dr.async_get(hass)
-        device = device_registry.async_get_device(
+        device = device_registry.async_get_device_by_identifier(
             identifiers={(DOMAIN, entry.unique_id)}
         )
 
