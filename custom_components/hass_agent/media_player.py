@@ -58,7 +58,7 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> bool:
     device_registry = dr.async_get(hass)
-    device = device_registry.async_get_device_by_identifier((DOMAIN, entry.unique_id))
+    device = device_registry.async_get_device_by_identifier((DOMAIN, entry.unique_id), entry.entry_id)
 
     if device is None:
         return False
